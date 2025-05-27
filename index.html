@@ -4,24 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Схема мошенничества с Apple ID</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs Babel/7.24.5/babel.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
   <style>
     body {
       font-family: 'Inter', sans-serif;
       background: linear-gradient(135deg, #1e3a8a, #60a5fa);
       color: #1f2937;
+      margin: 0;
+      overflow-x: hidden;
     }
-    .section {
-      min-height: 100vh;
+    .slide {
+      height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 2rem;
+      position: relative;
+      scroll-snap-align: start;
     }
     .chat-bubble {
       position: relative;
@@ -29,10 +30,12 @@
       border-radius: 1rem;
       padding: 1rem;
       margin: 0.5rem;
-      transition: transform 0.3s ease;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
     }
     .chat-bubble:hover {
       transform: scale(1.05);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     }
     .chat-bubble::after {
       content: '';
@@ -43,19 +46,39 @@
       border-style: solid;
       border-color: #f3f4f6 transparent transparent transparent;
     }
+    .chat-details {
+      display: none;
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+    .chat-bubble.active .chat-details {
+      display: block;
+    }
     .timeline-item {
       position: relative;
       padding-left: 2rem;
       margin-bottom: 2rem;
+      opacity: 0;
+      transform: translateX(-20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .timeline-item.active {
+      opacity: 1;
+      transform: translateX(0);
     }
     .timeline-item::before {
       content: '';
       position: absolute;
       left: 0;
       top: 0;
-      height: 100%;
+      height: 0;
       width: 4px;
       background: #3b82f6;
+      transition: height 0.5s ease;
+    }
+    .timeline-item.active::before {
+      height: 100%;
     }
     .screenshot-placeholder {
       background: #e5e7eb;
@@ -64,183 +87,283 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 200px;
+      height: 300px;
       font-size: 1.2rem;
       color: #6b7280;
+      transition: transform 0.3s ease;
+    }
+    .screenshot-placeholder:hover {
+      transform: scale(1.02);
     }
     .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
       transition: opacity 0.3s ease-in-out;
+    }
+    .modal.active {
+      display: flex;
+      opacity: 1;
+    }
+    .modal-content {
+      transform: scale(0.8);
+      transition: transform 0.3s ease-in-out;
+    }
+    .modal.active .modal-content {
+      transform: scale(1);
+    }
+    .btn {
+      transition: transform 0.3s ease, background 0.3s ease;
+    }
+    .btn:hover {
+      transform: scale(1.05);
+      background: #2563eb;
+    }
+    .next-btn {
+      position: absolute;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 10;
+    }
+    .simulation-step {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .simulation-step.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .container {
+      scroll-snap-type: y mandatory;
+      overflow-y: scroll;
+      height: 100vh;
     }
   </style>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel">
-    function App() {
-      const [isModalOpen, setIsModalOpen] = React.useState(false);
-      const [activeChat, setActiveChat] = React.useState(null);
+  <div class="container">
+    <!-- Slide 1: Введение -->
+    <section class="slide bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+      <div class="max-w-5xl mx-auto text-center" data-aos="zoom-in">
+        <h1 class="text-6xl font-extrabold mb-4">Схема мошенничества с Apple ID</h1>
+        <p class="text-2xl mb-8">Новая схема: как мошенники крадут устройства через Apple ID</p>
+        <button class="bg-white text-blue-600 py-3 px-6 rounded-lg btn" onclick="scrollToNext()">Начать</button>
+      </div>
+      <button class="next-btn bg-white text-blue-600 py-2 px-4 rounded-lg btn" onclick="scrollToNext()">Далее</button>
+    </section>
 
-      const toggleModal = () => {
-        setIsModalOpen(!isModalOpen);
-      };
-
-      const chats = [
-        { id: 1, name: "Мошенник #1", avatar: "🕵️", message: "Привет! Это HR из IT-компании. У нас есть вакансия, переходи в Telegram!" },
-        { id: 2, name: "Мошенник #2", avatar: "😈", message: "Нужно установить ПО. Выйди из Apple ID, это временно!" },
-        { id: 3, name: "Мошенник #3", avatar: "🤥", message: "Введи наш Apple ID для проверки устройства." },
-      ];
-
-      React.useEffect(() => {
-        AOS.init({ duration: 1000 });
-      }, []);
-
-      return (
-        <div className="text-gray-800">
-          {/* Header */}
-          <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-8 text-center">
-            <h1 className="text-5xl font-extrabold" data-aos="zoom-in">
-              Схема мошенничества с Apple ID
-            </h1>
-            <p className="mt-3 text-xl" data-aos="fade-up" data-aos-delay="200">
-              Разоблачаем новую схему мошенников и учимся защищаться
+    <!-- Slide 2: Как работает схема? -->
+    <section class="slide bg-white/90 backdrop-blur-md">
+      <div class="max-w-5xl mx-auto" data-aos="fade-up">
+        <h2 class="text-5xl font-bold text-center mb-8">Как работает схема?</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <p class="text-xl mb-6">
+              Мошенники находят жертв через hh.ru, представляясь работодателями, и заманивают в Telegram.
             </p>
-          </header>
-
-          {/* Section 1: Как работает схема? */}
-          <section className="section bg-white/90 backdrop-blur-md">
-            <div className="max-w-5xl mx-auto" data-aos="fade-up">
-              <h2 className="text-4xl font-bold text-center mb-8">Как работает схема?</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="timeline-item" data-timeline-id="1">
+              <h3 class="text-2xl font-semibold">Шаг 1: Контакт</h3>
+              <p>Вас приглашают в Telegram под предлогом "работы".</p>
+            </div>
+            <div class="timeline-item" data-timeline-id="2">
+              <h3 class="text-2xl font-semibold">Шаг 2: Манипуляция</h3>
+              <p>Просят выйти из Apple ID и войти под их учёткой.</p>
+            </div>
+            <div class="timeline-item" data-timeline-id="3">
+              <h3 class="text-2xl font-semibold">Шаг 3: Контроль</h3>
+              <p>Активируют "Локатор" и блокируют устройство.</p>
+            </div>
+          </div>
+          <div class="flex flex-col space-y-4">
+            <h3 class="text-2xl font-semibold text-center">Сообщения мошенников</h3>
+            <div class="chat-bubble" data-chat-id="1">
+              <div class="flex items-center">
+                <span class="text-3xl mr-2">🕵️</span>
                 <div>
-                  <p className="text-lg mb-6">
-                    Мошенники находят жертв через hh.ru, представляясь работодателями. Они заманивают в Telegram под предлогом "удалённой работы" или "проверки устройства".
-                  </p>
-                  <div className="timeline-item" data-aos="fade-right">
-                    <h3 className="text-xl font-semibold">Шаг 1: Контакт</h3>
-                    <p>Вас находят через hh.ru и приглашают в Telegram.</p>
-                  </div>
-                  <div className="timeline-item" data-aos="fade-right" data-aos-delay="200">
-                    <h3 className="text-xl font-semibold">Шаг 2: Манипуляция</h3>
-                    <p>Просят выйти из Apple ID и войти под их учётной записью.</p>
-                  </div>
-                  <div className="timeline-item" data-aos="fade-right" data-aos-delay="400">
-                    <h3 className="text-xl font-semibold">Шаг 3: Контроль</h3>
-                    <p>Активируют "Локатор" и блокируют устройство.</p>
-                  </div>
-                </div>
-                <div className="flex flex-col space-y-4">
-                  <h3 className="text-xl font-semibold text-center">Примеры сообщений мошенников</h3>
-                  {chats.map((chat) => (
-                    <div
-                      key={chat.id}
-                      className="chat-bubble cursor-pointer"
-                      onClick={() => setActiveChat(chat.id)}
-                      data-aos="fade-left"
-                      data-aos-delay={chat.id * 100}
-                    >
-                      <div className="flex items-center">
-                        <span className="text-2xl mr-2">{chat.avatar}</span>
-                        <div>
-                          <p className="font-bold">{chat.name}</p>
-                          <p>{chat.message}</p>
-                        </div>
-                      </div>
-                      {activeChat === chat.id && (
-                        <div className="mt-2 text-sm text-gray-600">
-                          <p>Кликни, чтобы закрыть</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  <p class="font-bold text-lg">Мошенник #1</p>
+                  <p>Привет! Это HR из IT-компании. У нас есть вакансия, переходи в Telegram!</p>
+                  <div class="chat-details">Типичное сообщение для заманивания.</div>
                 </div>
               </div>
             </div>
-          </section>
-
-          {/* Section 2: Зачем это нужно мошенникам? */}
-          <section className="section bg-gray-100/90 backdrop-blur-md">
-            <div className="max-w-5xl mx-auto text-center" data-aos="zoom-in">
-              <h2 className="text-4xl font-bold mb-8">Цели мошенников</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow" data-aos="flip-up">
-                  <h3 className="text-xl font-bold mb-2">Кража устройства</h3>
-                  <p>Мошенники блокируют устройство через "Локатор" и "Блокировку активации".</p>
-                </div>
-                <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow" data-aos="flip-up" data-aos-delay="200">
-                  <h3 className="text-xl font-bold mb-2">Шантаж</h3>
-                  <p>Требуют деньги за "разблокировку" устройства.</p>
-                </div>
-                <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow" data-aos="flip-up" data-aos-delay="400">
-                  <h3 className="text-xl font-bold mb-2">Доступ к данным</h3>
-                  <p>Получают доступ к вашим фото и сообщениям через резервную копию.</p>
-                </div>
-              </div>
-              <div className="mt-8">
-                <h3 className="text-xl font-semibold mb-4">Пример интерфейса Apple ID</h3>
-                <div className="screenshot-placeholder">
-                  Вставьте скриншот экрана входа в Apple ID
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Section 3: Как защититься? */}
-          <section className="section bg-white/90 backdrop-blur-md">
-            <div className="max-w-5xl mx-auto text-center" data-aos="fade-right">
-              <h2 className="text-4xl font-bold mb-8">Как защититься?</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="chat-bubble" data-chat-id="2">
+              <div class="flex items-center">
+                <span class="text-3xl mr-2">😈</span>
                 <div>
-                  <ul className="list-disc list-inside text-left max-w-md mx-auto">
-                    <li className="mb-2">Никогда не выходите из своего Apple ID по просьбе незнакомцев.</li>
-                    <li className="mb-2">Не вводите чужой Apple ID на своём устройстве.</li>
-                    <li className="mb-2">Используйте двухфакторную аутентификацию.</li>
-                    <li>Сообщайте о подозрительных вакансиях в поддержку hh.ru и Apple.</li>
-                  </ul>
-                  <button
-                    onClick={toggleModal}
-                    className="mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-6 rounded-lg hover:scale-105 transition-transform"
-                  >
-                    Пример сообщения в поддержку
-                  </button>
-                </div>
-                <div className="screenshot-placeholder" data-aos="fade-left">
-                  Вставьте скриншот настроек двухфакторной аутентификации
+                  <p class="font-bold text-lg">Мошенник #2</p>
+                  <p>Нужно установить ПО. Выйди из Apple ID, это временно!</p>
+                  <div class="chat-details">Ложь про "временный" выход.</div>
                 </div>
               </div>
             </div>
-          </section>
-
-          {/* Modal for Support Message */}
-          {isModalOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal">
-              <div className="bg-white p-8 rounded-lg max-w-lg" data-aos="zoom-in">
-                <h3 className="text-2xl font-bold mb-4">Пример сообщения в поддержку hh.ru</h3>
-                <p className="mb-6 text-gray-700">
-                  Уважаемая служба поддержки hh.ru, <br />
-                  Я обнаружил подозрительную вакансию, связанную с мошеннической схемой. "Работодатель" связался со мной через Telegram и попросил выйти из моего Apple ID и войти под их учётной записью. Прошу проверить данную вакансию и заблокировать аккаунт мошенника. <br />
-                  Ссылка на вакансию: [вставьте ссылку] <br />
-                  Контакт в Telegram: [вставьте ID] <br />
-                  С уважением, [Ваше имя]
-                </p>
-                <button
-                  onClick={toggleModal}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2 px-4 rounded-lg hover:scale-105 transition-transform"
-                >
-                  Закрыть
-                </button>
+            <div class="chat-bubble" data-chat-id="3">
+              <div class="flex items-center">
+                <span class="text-3xl mr-2">🤥</span>
+                <div>
+                  <p class="font-bold text-lg">Мошенник #3</p>
+                  <p>Введи наш Apple ID для проверки устройства.</p>
+                  <div class="chat-details">Попытка получить контроль.</div>
+                </div>
               </div>
             </div>
-          )}
-
-          {/* Footer */}
-          <footer className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-6 text-center">
-            <p>Создано для образовательных целей | 2025</p>
-          </footer>
+          </div>
         </div>
-      );
+      </div>
+      <button class="next-btn bg-blue-600 text-white py-2 px-4 rounded-lg btn" onclick="scrollToNext()">Далее</button>
+    </section>
+
+    <!-- Slide 3: Цели мошенников -->
+    <section class="slide bg-gray-100/90 backdrop-blur-md">
+      <div class="max-w-5xl mx-auto text-center" data-aos="zoom-in">
+        <h2 class="text-5xl font-bold mb-8">Цели мошенников</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow" data-aos="flip-up">
+            <h3 class="text-2xl font-bold mb-2">Кража устройства</h3>
+            <p>Блокируют устройство через "Локатор".</p>
+          </div>
+          <div class="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow" data-aos="flip-up" data-aos-delay="200">
+            <h3 class="text-2xl font-bold mb-2">Шантаж</h3>
+            <p>Требуют деньги за "разблокировку".</p>
+          </div>
+          <div class="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow" data-aos="flip-up" data-aos-delay="400">
+            <h3 class="text-2xl font-bold mb-2">Доступ к данным</h3>
+            <p>Крадут фото и сообщения через резервную копию.</p>
+          </div>
+        </div>
+        <div class="mt-8">
+          <h3 class="text-2xl font-semibold mb-4">Интерфейс Apple ID</h3>
+          <div class="screenshot-placeholder">Вставьте скриншот экрана входа в Apple ID (рекомендуемое разрешение: 600x400)</div>
+        </div>
+      </div>
+      <button class="next-btn bg-blue-600 text-white py-2 px-4 rounded-lg btn" onclick="scrollToNext()">Далее</button>
+    </section>
+
+    <!-- Slide 4: Как защититься? -->
+    <section class="slide bg-white/90 backdrop-blur-md">
+      <div class="max-w-5xl mx-auto text-center" data-aos="fade-right">
+        <h2 class="text-5xl font-bold mb-8">Как защититься?</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <ul class="list-disc list-inside text-left max-w-md mx-auto text-lg">
+              <li class="mb-2">Не выходите из своего Apple ID по просьбе незнакомцев.</li>
+              <li class="mb-2">Не вводите чужой Apple ID на своём устройстве.</li>
+              <li class="mb-2">Включите двухфакторную аутентификацию.</li>
+              <li>Сообщайте о подозрительных вакансиях в поддержку hh.ru и Apple.</li>
+            </ul>
+            <button class="mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-6 rounded-lg btn" onclick="toggleModal()">Пример сообщения в поддержку</button>
+          </div>
+          <div class="screenshot-placeholder" data-aos="fade-left">Вставьте скриншот настроек двухфакторной аутентификации (600x400)</div>
+        </div>
+      </div>
+      <button class="next-btn bg-blue-600 text-white py-2 px-4 rounded-lg btn" onclick="scrollToNext()">Далее</button>
+    </section>
+
+    <!-- Slide 5: Симуляция атаки -->
+    <section class="slide bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+      <div class="max-w-5xl mx-auto text-center" data-aos="zoom-in">
+        <h2 class="text-5xl font-bold mb-8">Симуляция атаки</h2>
+        <p class="text-xl mb-6">Нажмите, чтобы увидеть, как мошенники действуют.</p>
+        <button class="bg-white text-blue-600 py-3 px-6 rounded-lg btn" onclick="runSimulation()">Запустить симуляцию</button>
+        <div class="mt-8 space-y-4">
+          <div class="simulation-step" data-step-id="1">
+            <p class="text-lg font-semibold">1. Мошенник связывается через hh.ru</p>
+            <p>Отправляет сообщение: "Есть вакансия, свяжитесь в Telegram".</p>
+          </div>
+          <div class="simulation-step" data-step-id="2">
+            <p class="text-lg font-semibold">2. Просьба выйти из Apple ID</p>
+            <p>В Telegram просят: "Выйдите из Apple ID для установки ПО".</p>
+          </div>
+          <div class="simulation-step" data-step-id="3">
+            <p class="text-lg font-semibold">3. Блокировка устройства</p>
+            <p>После входа под их Apple ID устройство блокируется.</p>
+          </div>
+        </div>
+      </div>
+      <button class="next-btn bg-white text-blue-600 py-2 px-4 rounded-lg btn" onclick="scrollToNext()">Завершить</button>
+    </section>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+      <div class="modal-content bg-white p-8 rounded-lg max-w-lg">
+        <h3 class="text-2xl font-bold mb-4">Пример сообщения в поддержку hh.ru</h3>
+        <p class="mb-6 text-gray-700">
+          Уважаемая служба поддержки hh.ru, <br />
+          Я обнаружил подозрительную вакансию, связанную с мошеннической схемой. "Работодатель" связался со мной через Telegram и попросил выйти из моего Apple ID и войти под их учётной записью. Прошу проверить данную вакансию и заблокировать аккаунт мошенника. <br />
+          Ссылка на вакансию: [вставьте ссылку] <br />
+          Контакт в Telegram: [вставьте ID] <br />
+          С уважением, [Ваше имя]
+        </p>
+        <button class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2 px-4 rounded-lg btn" onclick="toggleModal()">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize AOS
+    AOS.init({ duration: 1000, once: false });
+
+    // Chat bubble interaction
+    document.querySelectorAll('.chat-bubble').forEach(bubble => {
+      bubble.addEventListener('click', () => {
+        document.querySelectorAll('.chat-bubble').forEach(b => b.classList.remove('active'));
+        bubble.classList.toggle('active');
+      });
+    });
+
+    // Modal toggle
+    function toggleModal() {
+      const modal = document.getElementById('modal');
+      modal.classList.toggle('active');
     }
 
-    ReactDOM.render(<App />, document.getElementById('root'));
+    // Scroll to next slide
+    function scrollToNext() {
+      const slides = document.querySelectorAll('.slide');
+      const currentSlide = Array.from(slides).find(slide => slide.getBoundingClientRect().top >= 0);
+      const nextSlide = currentSlide.nextElementSibling;
+      if (nextSlide) {
+        nextSlide.scrollIntoView({ behavior: 'smooth' });
+        triggerAnimations(nextSlide);
+      }
+    }
+
+    // Trigger animations for a slide
+    function triggerAnimations(slide) {
+      slide.querySelectorAll('[data-aos]').forEach(el => {
+        el.classList.remove('aos-animate');
+        setTimeout(() => el.classList.add('aos-animate'), 100);
+      });
+      if (slide.querySelector('.timeline-item')) {
+        slide.querySelectorAll('.timeline-item').forEach((item, index) => {
+          setTimeout(() => item.classList.add('active'), index * 500);
+        });
+      }
+    }
+
+    // Simulation animation
+    function runSimulation() {
+      const steps = document.querySelectorAll('.simulation-step');
+      steps.forEach((step, index) => {
+        setTimeout(() => {
+          step.classList.add('active');
+        }, index * 1000);
+      });
+    }
+
+    // Trigger animations on scroll
+    window.addEventListener('scroll', () => {
+      document.querySelectorAll('.slide').forEach(slide => {
+        const rect = slide.getBoundingClientRect();
+        if (rect.top >= 0 && rect.top < window.innerHeight / 2) {
+          triggerAnimations(slide);
+        }
+      });
+    });
   </script>
 </body>
 </html>
