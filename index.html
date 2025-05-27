@@ -82,7 +82,6 @@
     }
     .screenshot-placeholder {
       background: #e5e7eb;
-      background: url('apid.jpg');
       border: 2px dashed #9ca3af;
       border-radius: 0.5rem;
       display: flex;
@@ -238,7 +237,10 @@
         </div>
         <div class="mt-8">
           <h3 class="text-2xl font-semibold mb-4">Интерфейс Apple ID</h3>
-          <div class="screenshot-placeholder"></div>
+          <div class="screenshot-placeholder p-2">
+  <img src="apid.jpg" alt="Интерфейс Apple ID" class="h-full w-auto object-contain rounded-md" />
+</div>
+
         </div>
       </div>
       <button class="next-btn bg-blue-600 text-white py-2 px-4 rounded-lg btn" onclick="scrollToNext()">Далее</button>
@@ -258,7 +260,10 @@
             </ul>
             <button class="mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-6 rounded-lg btn" onclick="toggleModal()">Пример сообщения в поддержку</button>
           </div>
-          <div class="screenshot-placeholder" data-aos="fade-left">Вставьте скриншот настроек двухфакторной аутентификации (600x400)</div>
+          <div class="screenshot-placeholder p-2">
+  <img src="two-factor-auth.png" alt="Двухфакторная аутентификация" class="h-full w-auto object-contain rounded-md" />
+</div>
+
         </div>
       </div>
       <button class="next-btn bg-blue-600 text-white py-2 px-4 rounded-lg btn" onclick="scrollToNext()">Далее</button>
